@@ -1,0 +1,40 @@
+version: "3"
+
+# More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      - "80:80/tcp"
+    environment:
+      TZ: 'Asia/Ho_Chi_Minh'
+      WEBPASSWORD: 'SomeRandomPassword'
+      PIHOLE_DNS_: '10.0.0.3#5054'
+    volumes:
+      - './etc-pihole/:/etc/pihole/'
+      - './etc-dnsmasq.d/:/etc/dnsmasq.d/'
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    networks:
+        pihole_net:
+          ipv4_address: 10.0.0.2
+
+  cloudflared-dns-https:
+    container_name: cloudflared-dns
+    image: visibilityspots/cloudflared:latest
+    restart: unless-stopped
+    networks:
+        pihole_net:
+          ipv4_address: 10.0.0.3
+
+networks:
+  pihole_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/28
